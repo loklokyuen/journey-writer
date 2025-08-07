@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+	--background: #ffffff;
+	--foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
+	--color-chardon-50: #fff2f1;
+	--color-chardon-100: #ffe2e0;
+	--color-chardon-200: #ffcac6;
+	--color-chardon-300: #ffa59e;
+	--color-chardon-400: #ff7166;
+	--color-chardon-500: #fd4436;
+	--color-chardon-600: #eb2617;
+	--color-chardon-700: #c61c0f;
+	--color-chardon-800: #a31b11;
+	--color-chardon-900: #871d15;
+	--color-chardon-950: #4a0a05;
+	--color-lavender-50: #f5f5fd;
+	--color-lavender-100: #ececfb;
+	--color-lavender-200: #dddef7;
+	--color-lavender-300: #c2c1f1;
+	--color-lavender-400: #a09be7;
+	--color-lavender-500: #8276dc;
+	--color-lavender-600: #6e58cf;
+	--color-lavender-700: #5d45bc;
+	--color-lavender-800: #4e3a9d;
+	--color-lavender-900: #413181;
+	--color-lavender-950: #271e57;
+	--color-crater-brown-50: #faf4f2;
+	--color-crater-brown-100: #f2e6e2;
+	--color-crater-brown-200: #e5cbc3;
+	--color-crater-brown-300: #d4a99d;
+	--color-crater-brown-400: #c28275;
+	--color-crater-brown-500: #b5655a;
+	--color-crater-brown-600: #a7544f;
+	--color-crater-brown-700: #8b4343;
+	--color-crater-brown-800: #713b3d;
+	--color-crater-brown-900: #482728;
+	--color-crater-brown-950: #31191b;
+	--color-cerise-red-50: #fdf3f4;
+	--color-cerise-red-100: #fce7eb;
+	--color-cerise-red-200: #f8d3db;
+	--color-cerise-red-300: #f2afbc;
+	--color-cerise-red-400: #ea8299;
+	--color-cerise-red-500: #da4167;
+	--color-cerise-red-600: #c93560;
+	--color-cerise-red-700: #a92751;
+	--color-cerise-red-800: #8e2349;
+	--color-cerise-red-900: #7a2143;
+	--color-cerise-red-950: #430e21;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+	:root {
+		--background: #0a0a0a;
+		--foreground: #ededed;
+	}
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: Arial, Helvetica, sans-serif;
 }
