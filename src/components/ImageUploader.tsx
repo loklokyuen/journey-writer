@@ -20,7 +20,7 @@ export default function ImageUploader() {
 	});
 
 	return (
-		<div className="border-2 border-dashed p-6 rounded-md text-center bg-white">
+		<div className="border-2 border-dashed border-crater-brown-700 p-6 rounded-lg text-center bg-white">
 			<div
 				{...getRootProps()}
 				className="cursor-pointer py-6 px-4 border border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100">

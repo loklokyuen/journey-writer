@@ -55,6 +55,14 @@
 	--color-cerise-red-900: #7a2143;
 	--color-cerise-red-950: #430e21;
 }
+.font-heading {
+	font-family: var(--font-heading), serif;
+	font-size: 1.75rem;
+}
+.font-body {
+	font-family: var(--font-body), system-ui, sans-serif;
+	color: var(--color-crater-brown-900);
+}
 
 @media (prefers-color-scheme: dark) {
 	:root {
