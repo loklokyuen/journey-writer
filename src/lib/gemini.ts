@@ -1,30 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
+import type { JournalGenerationInput, DateRange } from "@/lib/types";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export type Mode = "summary" | "day-by-day";
 export type DateMode = "exact" | "month";
-
-export interface DateRange {
-	mode: DateMode;
-	start: string;
-	end?: string;
-}
-
-export interface PhotoData {
-	date?: string;
-	location?: string;
-	userNote?: string;
-}
-
-export interface JournalGenerationInput {
-	mode: Mode;
-	dateRange: DateRange;
-	tripType: string[];
-	companions: string[];
-	photoData: PhotoData[];
-}
 
 function monthLabel(yyyyMm?: string) {
 	if (!yyyyMm) return "";
@@ -36,67 +17,81 @@ function monthLabel(yyyyMm?: string) {
 	});
 }
 
-function dateRangeLabel(dr: DateRange) {
-	if (dr.mode === "exact") {
-		const end = dr.end ? ` to ${dr.end}` : "";
-		return `${dr.start}${end}`.trim();
-	}
-	const start = monthLabel(dr.start);
-	const end = dr.end ? ` to ${monthLabel(dr.end)}` : "";
-	return `${start}${end}`.trim();
-}
-
-// ---- Prompt builder ----
 function buildPrompt(input: JournalGenerationInput) {
-	const { mode, dateRange, tripType, companions, photoData } = input;
+	const { mode, dateRange, tripType, companions, photoData, notes } = input;
 
-	const header = `You are an AI travel journal assistant. Generate a ${
-		mode === "summary" ? "concise trip summary" : "detailed day-by-day journal"
-	} strictly from the provided information.
+	const contextLines = [
+		tripType.length
+			? `Trip type (user-selected): ${tripType.join(", ")}`
+			: null,
+		companions.length
+			? `Companions (user-selected): ${companions.join(", ")}`
+			: null,
+		dateRange.start || dateRange.end
+			? `User-entered dates (${dateRange.mode}): ${
+					dateRange.start || "(none)"
+			  }${dateRange.end ? " to " + dateRange.end : ""}`
+			: null,
+		notes ? `User notes: ${notes}` : null,
+	]
+		.filter(Boolean)
+		.join("\n");
 
-		Rules:
-		- Do NOT invent locations, activities, restaurants, or companions.
-		- If information is missing, acknowledge it or omit it gracefully.
-		- Keep tone warm, descriptive, and specific.
-		- Prefer concrete details from notes/EXIF over generic filler.
-		- Keep each paragraph tight (3–5 sentences).`;
+	const photosBlock = photoData.length
+		? photoData
+				.map((p, i) => {
+					const d = p.date ? `Date: ${p.date}` : "Date: (unknown)";
+					const l = p.location ? ` | Location: ${p.location}` : "";
+					const n = p.userNote ? `\nUserNote: ${p.userNote}` : "";
+					return `- Photo ${i + 1}: ${d}${l}${n}`;
+				})
+				.join("\n")
+		: "(no photos provided)";
 
-	const context = `Trip context:
-		- Trip type: ${tripType.length ? tripType.join(", ") : "(unspecified)"}
-		- Companions: ${companions.length ? companions.join(", ") : "(unspecified)"}
-		- Dates: ${dateRangeLabel(dateRange)}`;
-
-	const details =
-		mode === "day-by-day"
-			? `Daily details (source of truth):
-${photoData
-	.map((p, i) => {
-		const date = p.date ? `Date: ${p.date}` : "Date: (unknown)";
-		const loc = p.location ? ` | Location: ${p.location}` : "";
-		const note = p.userNote ? `\nNotes: ${p.userNote}` : "";
-		return `- Entry ${i + 1}: ${date}${loc}${note}`;
-	})
-	.join("\n")}`
-			: `Trip notes (source of truth):
-${photoData
-	.map((p, i) => `- Note ${i + 1}: ${p.userNote ?? "(none)"}`)
-	.join("\n")}`;
-
+	// Output spec: facts > prose. If day-by-day, cluster by date if possible; else group by location/topic.
 	const outputSpec =
 		mode === "day-by-day"
-			? `Output format:
-				- One section per day (or logical cluster), with a short heading like "Day 1 — City" if info allows.
-				- Under each, write 1–2 short paragraphs.
-				- If exact dates are not provided (month mode), infer only the order, not specific dates.`
-			: `Output format:
-				- 2–3 short paragraphs summarizing the trip across the date range.
-				- Mention companions and trip type only if provided.`;
+			? `OUTPUT FORMAT (STRICT):
+			- Title line: "Trip Journal"
+			- Then for each day or cluster:
+			- "Day X" (or "Cluster X") with optional date if known.
+			- Bullet lists only:
+				• Places/landmarks visited (from photos/notes only)
+				• Activities done
+				• Food & drink items (names of dishes/venues if present in notes/metadata)
+				• Transport (only if explicitly present)
+			- If dates are missing, order photos logically but DO NOT fabricate dates or sequence beyond what is implied.
+			- Keep to facts. No imaginative storytelling.`
+			: `OUTPUT FORMAT (STRICT):
+			- Title line: "Trip Summary"
+			- Sections as bullet lists:
+			• Itinerary overview (cities/landmarks)
+			• Activities
+			• Food & drink
+			• Highlights (facts only)
+			- Keep it concise and factual. No flowery prose.`;
 
-	const antiHallucination = `Important:
-				- Only use details present above.
-				- If unsure, write neutrally without fabricating specifics.`;
+	const rules = `RULES (CRITICAL):
+			- Derive all details ONLY from:
+			• photoData (date/location/userNote fields)
+			• explicit user inputs above
+			- DO NOT invent venues, dates, or sequences.
+			- If a detail is uncertain or absent, omit it.
+			- Prefer lists over paragraphs. No filler adjectives.
+			- If multiple photos share the same date/location, group them.`;
 
-	return `${header}\n\n${context}\n\n${details}\n\n${outputSpec}\n\n${antiHallucination}`;
+	return [
+		`You are an AI assistant generating a TRAVEL JOURNAL from user photos.`,
+		`Primary goal: extract FACTS (places, activities, food) from provided inputs.`,
+		``,
+		`USER CONTEXT:\n${contextLines || "(no extra context)"}`,
+		``,
+		`PHOTO DATA (source of truth):\n${photosBlock}`,
+		``,
+		outputSpec,
+		``,
+		rules,
+	].join("\n");
 }
 
 export async function generateJournalEntry(

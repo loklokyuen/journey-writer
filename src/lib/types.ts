@@ -16,10 +16,18 @@ export interface PhotoData {
 	userNote?: string;
 }
 
-export interface JournalPayload {
+export interface PhotoItem {
+	id: string;
+	file: File;
+	previewUrl: string;
+	userNote?: string;
+}
+
+export interface JournalGenerationInput {
 	mode: Mode;
 	dateRange: DateRange;
 	tripType: string[];
 	companions: string[];
 	photoData: PhotoData[];
+	notes?: string;
 }

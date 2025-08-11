@@ -1,21 +1,31 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import type { PhotoItem } from "@/lib/types";
 
-export default function ImageUploader() {
-	const [previews, setPreviews] = useState<string[]>([]);
-
-	const onDrop = useCallback((acceptedFiles: File[]) => {
-		const urls = acceptedFiles.map((file) => URL.createObjectURL(file));
-		setPreviews(urls);
-	}, []);
+export default function ImageUploader({
+	photos,
+	onChange,
+}: {
+	photos: PhotoItem[];
+	onChange: (next: PhotoItem[]) => void;
+}) {
+	const onDrop = useCallback(
+		(acceptedFiles: File[]) => {
+			const newItems: PhotoItem[] = acceptedFiles.map((file) => ({
+				id: crypto.randomUUID(),
+				file,
+				previewUrl: URL.createObjectURL(file),
+			}));
+			onChange([...photos, ...newItems]);
+		},
+		[photos, onChange]
+	);
 
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop,
-		accept: {
-			"image/*": [],
-		},
+		accept: { "image/*": [] },
 		multiple: true,
 	});
 
@@ -32,13 +42,13 @@ export default function ImageUploader() {
 				)}
 			</div>
 
-			{previews.length > 0 && (
+			{photos.length > 0 && (
 				<div className="mt-4 grid grid-cols-3 gap-2">
-					{previews.map((url, i) => (
+					{photos.map((p) => (
 						<img
-							key={i}
-							src={url}
-							alt={`Preview ${i}`}
+							key={p.id}
+							src={p.previewUrl}
+							alt="Preview"
 							className="w-full h-auto rounded shadow-sm"
 						/>
 					))}
