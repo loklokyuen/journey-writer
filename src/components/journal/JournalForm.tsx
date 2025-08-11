@@ -5,7 +5,12 @@ import ModeToggle from "@/components/journal/ModeToggle";
 import ChipMultiSelect from "@/components/journal/ChipMultiSelect";
 import { useState } from "react";
 import { TRIP_TYPES, COMPANIONS } from "@/lib/constants";
-import type { Mode, DateRange, JournalPayload } from "@/lib/types";
+import type {
+	Mode,
+	DateRange,
+	PhotoItem,
+	JournalGenerationInput,
+} from "@/lib/types";
 import DateRangePicker from "@/components/journal/DateRangePicker";
 
 export default function JournalForm() {
@@ -18,31 +23,51 @@ export default function JournalForm() {
 	const [tripType, setTripType] = useState<string[]>([]);
 	const [companions, setCompanions] = useState<string[]>([]);
 	const [notes, setNotes] = useState("");
+	const [photos, setPhotos] = useState<PhotoItem[]>([]);
 	const [entry, setEntry] = useState("");
 	const [loading, setLoading] = useState(false);
 
 	const handleGenerate = async () => {
 		setLoading(true);
-		const payload: JournalPayload = {
-			mode,
-			dateRange,
-			tripType,
-			companions,
-			photoData: [
-				{
-					date: dateRange.start,
-					userNote: notes,
-				},
-			],
-		};
-		const res = await fetch("/api/generate-journal", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(payload),
-		});
-		const data = await res.json();
-		setEntry(data.entry);
-		setLoading(false);
+		setEntry("");
+		if (dateRange.start && dateRange.end) {
+			const a = new Date(dateRange.start);
+			const b = new Date(dateRange.end);
+			if (a > b) {
+				setEntry("❌ End date must be after start date.");
+				return;
+			}
+		}
+		try {
+			const payload: JournalGenerationInput = {
+				mode,
+				dateRange,
+				tripType,
+				companions,
+				photoData: photos.map(() => ({})),
+				notes,
+			};
+
+			const res = await fetch("/api/generate-journal", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			});
+
+			if (!res.ok) {
+				const errData = await res.json().catch(() => ({}));
+				const msg = errData?.error || `Error ${res.status}`;
+				setEntry(`❌ ${msg}`);
+				return;
+			}
+
+			const data = await res.json();
+			setEntry(data.entry ?? "");
+		} catch (err: any) {
+			setEntry(`❌ ${err.message || "Unexpected error"}`);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -51,7 +76,7 @@ export default function JournalForm() {
 				Journey Writer 🧳
 			</h1>
 
-			<ImageUploader />
+			<ImageUploader photos={photos} onChange={setPhotos} />
 
 			<ModeToggle mode={mode} setMode={setMode} />
 
