@@ -16,12 +16,20 @@ export interface PhotoData {
 	userNote?: string;
 }
 
-export interface PhotoItem {
+export type PhotoItem = {
 	id: string;
 	file: File;
 	previewUrl: string;
-	userNote?: string;
-}
+	takenAt?: string;
+	lat?: number;
+	lng?: number;
+	place?: {
+		name?: string;
+		country?: string;
+		countryCode?: string;
+		displayName?: string;
+	};
+};
 
 export interface JournalGenerationInput {
 	mode: Mode;
