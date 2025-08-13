@@ -1,6 +1,5 @@
 "use client";
 
-import ImageUploader from "@/components/ImageUploader";
 import ModeToggle from "@/components/journal/ModeToggle";
 import ChipMultiSelect from "@/components/journal/ChipMultiSelect";
 import { useState } from "react";
@@ -72,12 +71,6 @@ export default function JournalForm() {
 
 	return (
 		<main className="p-6 max-w-xl mx-auto my-4 space-y-4 bg-chardon-50 rounded-2xl font-body">
-			<h1 className="text-2xl font-heading font-bold mb-4 text-crater-brown-700 text-center">
-				Journey Writer 🧳
-			</h1>
-
-			<ImageUploader photos={photos} onChange={setPhotos} />
-
 			<ModeToggle mode={mode} setMode={setMode} />
 
 			<DateRangePicker value={dateRange} onChange={setDateRange} />

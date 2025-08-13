@@ -65,6 +65,8 @@ export default function ImageUploader({
 	const [reading, setReading] = useState(false);
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
+			setReading(true);
+
 			const newItems: PhotoItem[] = [];
 			for (const file of acceptedFiles) {
 				const previewUrl = await makePreviewUrl(file);
@@ -76,7 +78,6 @@ export default function ImageUploader({
 			}
 			const next = [...photos, ...newItems];
 			onChange(next);
-			setReading(true);
 			try {
 				const updated = await Promise.all(
 					newItems.map(async (item) => {
@@ -139,15 +140,16 @@ export default function ImageUploader({
 				{...getRootProps()}
 				className="cursor-pointer py-6 px-4 border border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100">
 				<input {...getInputProps()} />
-				{isDragActive ? (
-					<p>Drop the photos here...</p>
+				{!reading ? (
+					isDragActive ? (
+						<p>Drop the photos here...</p>
+					) : (
+						<p>Drag & drop some photos here, or click to select files</p>
+					)
 				) : (
-					<p>Drag & drop some photos here, or click to select files</p>
+					<div className="mt-2 text-sm opacity-70">Reading photo metadata…</div>
 				)}
 			</div>
-			{reading && (
-				<div className="mt-2 text-sm opacity-70">Reading photo metadata…</div>
-			)}
 
 			{photos.length > 0 && (
 				<div className="mt-4 grid grid-cols-3 gap-2 text-left">
