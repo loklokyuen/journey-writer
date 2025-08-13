@@ -39,3 +39,27 @@ export interface JournalGenerationInput {
 	photoData: PhotoData[];
 	notes?: string;
 }
+
+export type TripItemKind =
+	| "place"
+	| "meal"
+	| "activity"
+	| "transport"
+	| "other";
+
+export type TripItem = {
+	id: string;
+	clusterId: string;
+	kind: TripItemKind;
+	date?: string;
+	time?: string;
+	title: string;
+	description?: string;
+	location?: {
+		name?: string;
+		country?: string;
+		countryCode?: string;
+		displayName?: string;
+	};
+	photos?: PhotoItem[];
+};
