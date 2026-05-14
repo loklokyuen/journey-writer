@@ -1,32 +1,22 @@
 import { NextResponse } from "next/server";
 
 function pickName(data: any) {
-	const tags = data?.extratags || {};
 	const nd = data?.namedetails || {};
 	const addr = data?.address || {};
+	const poiName = nd.name || data.name;
 
-	if (tags.leisure === "park" && (nd.name || data.name))
-		return nd.name || data.name;
-	if (tags.tourism === "attraction" && (nd.name || data.name))
-		return nd.name || data.name;
+	// named place that isn't just a road segment
+	if (poiName && poiName !== addr.road) return poiName;
 
-	const amenity = tags.amenity;
-	if (
-		["restaurant", "cafe", "fast_food", "pub", "bar"].includes(amenity) &&
-		(nd.name || data.name)
-	) {
-		return nd.name || data.name;
-	}
-
-	if (nd.name || data.name) return nd.name || data.name;
-
+	// geographic fallback — specific before broad, avoid county/state
 	return (
-		addr.city ||
-		addr.town ||
-		addr.village ||
+		addr.neighbourhood ||
 		addr.suburb ||
-		addr.county ||
-		addr.state
+		addr.quarter ||
+		addr.village ||
+		addr.town ||
+		addr.city ||
+		addr.county
 	);
 }
 
@@ -45,7 +35,7 @@ export async function GET(req: Request) {
 		lat
 	)}&lon=${encodeURIComponent(
 		lng
-	)}&zoom=18&addressdetails=1&namedetails=1&extratags=1`;
+	)}&zoom=14&addressdetails=1&namedetails=1`;
 
 	const res = await fetch(url, {
 		headers: {
