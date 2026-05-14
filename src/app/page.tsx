@@ -3,10 +3,27 @@ import ImageUploader from "@/components/ImageUploader";
 import JournalForm from "@/components/journal/JournalForm";
 import MomentsPanel from "@/components/journal/MomentsPanel";
 import { PhotoItem, TripItem } from "@/lib/types";
+import { dayKey } from "@/lib/grouping";
 import { useEffect, useState } from "react";
 
 function generateMomentsFromPhotos(photos: PhotoItem[]): TripItem[] {
-	return [];
+	const seen = new Map<string, Set<string>>();
+	const items: TripItem[] = [];
+	for (const p of photos) {
+		const cluster = dayKey(p.takenAt);
+		if (cluster === "unknown" || !p.place?.name) continue;
+		if (!seen.has(cluster)) seen.set(cluster, new Set());
+		if (seen.get(cluster)!.has(p.place.name)) continue;
+		seen.get(cluster)!.add(p.place.name);
+		items.push({
+			id: crypto.randomUUID(),
+			clusterId: cluster,
+			kind: "place",
+			title: p.place.name,
+			location: p.place,
+		});
+	}
+	return items;
 }
 
 export default function HomePage() {
@@ -44,7 +61,7 @@ export default function HomePage() {
 						}}
 					/>
 
-					<JournalForm />
+					<JournalForm photos={photos} moments={moments} />
 				</>
 			)}
 		</main>

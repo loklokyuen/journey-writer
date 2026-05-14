@@ -37,6 +37,7 @@ export interface JournalGenerationInput {
 	tripType: string[];
 	companions: string[];
 	photoData: PhotoData[];
+	moments?: TripItem[];
 	notes?: string;
 }
 

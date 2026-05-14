@@ -8,11 +8,18 @@ import type {
 	Mode,
 	DateRange,
 	PhotoItem,
+	TripItem,
 	JournalGenerationInput,
 } from "@/lib/types";
 import DateRangePicker from "@/components/journal/DateRangePicker";
 
-export default function JournalForm() {
+export default function JournalForm({
+	photos,
+	moments,
+}: {
+	photos: PhotoItem[];
+	moments: TripItem[];
+}) {
 	const [mode, setMode] = useState<Mode>("summary");
 	const [dateRange, setDateRange] = useState<DateRange>({
 		mode: "exact",
@@ -22,7 +29,6 @@ export default function JournalForm() {
 	const [tripType, setTripType] = useState<string[]>([]);
 	const [companions, setCompanions] = useState<string[]>([]);
 	const [notes, setNotes] = useState("");
-	const [photos, setPhotos] = useState<PhotoItem[]>([]);
 	const [entry, setEntry] = useState("");
 	const [loading, setLoading] = useState(false);
 
@@ -34,6 +40,7 @@ export default function JournalForm() {
 			const b = new Date(dateRange.end);
 			if (a > b) {
 				setEntry("❌ End date must be after start date.");
+				setLoading(false);
 				return;
 			}
 		}
@@ -43,7 +50,15 @@ export default function JournalForm() {
 				dateRange,
 				tripType,
 				companions,
-				photoData: photos.map(() => ({})),
+				photoData: photos.map((p) => ({
+					id: p.id,
+					date: p.takenAt,
+					location:
+						p.place?.displayName ||
+						[p.place?.name, p.place?.country].filter(Boolean).join(", ") ||
+						undefined,
+				})),
+				moments,
 				notes,
 			};
 
@@ -70,7 +85,7 @@ export default function JournalForm() {
 	};
 
 	return (
-		<main className="p-6 max-w-xl mx-auto my-4 space-y-4 bg-chardon-50 rounded-2xl font-body">
+		<div className="space-y-4">
 			<ModeToggle mode={mode} setMode={setMode} />
 
 			<DateRangePicker value={dateRange} onChange={setDateRange} />
@@ -113,6 +128,6 @@ export default function JournalForm() {
 					{entry}
 				</div>
 			)}
-		</main>
+		</div>
 	);
 }

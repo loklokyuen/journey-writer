@@ -70,19 +70,15 @@ export default function MomentsPanel({
 }) {
 	const groups = useMemo(() => groupPhotosByDay(photos), [photos]);
 
-	function addItemForDay(dayKey: string) {
-		const titleFromPlace =
-			photos.find((p) => p.takenAt && dayKey === (p.takenAt ? dayKey : ""))
-				?.place?.name ??
-			photos.find(
-				(p) => dayKey === (p.takenAt ? /* placeholder */ "" : "unknown")
-			)?.place?.name ??
-			"Untitled";
+	function addItemForDay(key: string) {
+		const group = groups.find((g) => g.key === key);
+		const photo = group?.items.find((p) => p.place?.name);
 		const newItem: TripItem = {
 			id: crypto.randomUUID(),
-			clusterId: dayKey,
+			clusterId: key,
 			kind: "place",
-			title: titleFromPlace,
+			title: photo?.place?.name ?? "Untitled",
+			location: photo?.place,
 		};
 		onChange([...items, newItem]);
 	}

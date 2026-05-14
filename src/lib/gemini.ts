@@ -18,7 +18,8 @@ function monthLabel(yyyyMm?: string) {
 }
 
 function buildPrompt(input: JournalGenerationInput) {
-	const { mode, dateRange, tripType, companions, photoData, notes } = input;
+	const { mode, dateRange, tripType, companions, photoData, moments, notes } =
+		input;
 
 	const contextLines = [
 		tripType.length
@@ -40,13 +41,31 @@ function buildPrompt(input: JournalGenerationInput) {
 	const photosBlock = photoData.length
 		? photoData
 				.map((p, i) => {
-					const d = p.date ? `Date: ${p.date}` : "Date: (unknown)";
+					const d = p.date
+						? `Date: ${new Date(p.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`
+						: "Date: (unknown)";
 					const l = p.location ? ` | Location: ${p.location}` : "";
 					const n = p.userNote ? `\nUserNote: ${p.userNote}` : "";
 					return `- Photo ${i + 1}: ${d}${l}${n}`;
 				})
 				.join("\n")
 		: "(no photos provided)";
+
+	const momentsBlock =
+		moments && moments.length
+			? moments
+					.map((m) => {
+						const loc =
+							m.location?.displayName ||
+							[m.location?.name, m.location?.country]
+								.filter(Boolean)
+								.join(", ");
+						const date = m.date ? ` (${m.date})` : "";
+						const detail = loc && loc !== m.title ? ` @ ${loc}` : "";
+						return `- [${m.kind}] ${m.title}${date}${detail}`;
+					})
+					.join("\n")
+			: null;
 
 	// Output spec: facts > prose. If day-by-day, cluster by date if possible; else group by location/topic.
 	const outputSpec =
@@ -88,10 +107,16 @@ function buildPrompt(input: JournalGenerationInput) {
 		``,
 		`PHOTO DATA (source of truth):\n${photosBlock}`,
 		``,
+		momentsBlock
+			? `USER-CONFIRMED MOMENTS (places/activities the user has verified):\n${momentsBlock}`
+			: null,
+		``,
 		outputSpec,
 		``,
 		rules,
-	].join("\n");
+	]
+		.filter((x) => x !== null)
+		.join("\n");
 }
 
 export async function generateJournalEntry(
