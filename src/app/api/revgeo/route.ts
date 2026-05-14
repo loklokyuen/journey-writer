@@ -1,14 +1,32 @@
 import { NextResponse } from "next/server";
 
-function pickName(addr: any, fallback?: string) {
+function pickName(data: any) {
+	const tags = data?.extratags || {};
+	const nd = data?.namedetails || {};
+	const addr = data?.address || {};
+
+	if (tags.leisure === "park" && (nd.name || data.name))
+		return nd.name || data.name;
+	if (tags.tourism === "attraction" && (nd.name || data.name))
+		return nd.name || data.name;
+
+	const amenity = tags.amenity;
+	if (
+		["restaurant", "cafe", "fast_food", "pub", "bar"].includes(amenity) &&
+		(nd.name || data.name)
+	) {
+		return nd.name || data.name;
+	}
+
+	if (nd.name || data.name) return nd.name || data.name;
+
 	return (
-		fallback ||
-		addr?.city ||
-		addr?.town ||
-		addr?.village ||
-		addr?.suburb ||
-		addr?.county ||
-		addr?.state
+		addr.city ||
+		addr.town ||
+		addr.village ||
+		addr.suburb ||
+		addr.county ||
+		addr.state
 	);
 }
 
@@ -25,7 +43,9 @@ export async function GET(req: Request) {
 
 	const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
 		lat
-	)}&lon=${encodeURIComponent(lng)}&zoom=14&addressdetails=1`;
+	)}&lon=${encodeURIComponent(
+		lng
+	)}&zoom=18&addressdetails=1&namedetails=1&extratags=1`;
 
 	const res = await fetch(url, {
 		headers: {
@@ -46,7 +66,7 @@ export async function GET(req: Request) {
 	const data = await res.json();
 	const addr = data?.address || {};
 	const displayName: string | undefined = data?.display_name;
-	const name = pickName(addr, data?.name);
+	const name = pickName(data);
 	const country: string | undefined = addr?.country;
 	const countryCode: string | undefined = addr?.country_code
 		? String(addr.country_code).toUpperCase()
