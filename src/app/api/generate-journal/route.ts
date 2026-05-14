@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateJournalEntry } from "@/lib/gemini";
+import { generateJournalEntry } from "@/lib/ai";
 import type { JournalGenerationInput } from "@/lib/types";
 
 export async function POST(req: Request) {

@@ -1,21 +1,10 @@
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import type { JournalGenerationInput, DateRange } from "@/lib/types";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export type Mode = "summary" | "day-by-day";
 export type DateMode = "exact" | "month";
-
-function monthLabel(yyyyMm?: string) {
-	if (!yyyyMm) return "";
-	const [y, m] = yyyyMm.split("-").map(Number);
-	if (!y || !m) return yyyyMm;
-	return new Date(y, m - 1, 1).toLocaleString("en-US", {
-		month: "long",
-		year: "numeric",
-	});
-}
 
 function buildPrompt(input: JournalGenerationInput) {
 	const { mode, dateRange, tripType, companions, photoData, moments, notes } =
@@ -67,7 +56,6 @@ function buildPrompt(input: JournalGenerationInput) {
 					.join("\n")
 			: null;
 
-	// Output spec: facts > prose. If day-by-day, cluster by date if possible; else group by location/topic.
 	const outputSpec =
 		mode === "day-by-day"
 			? `OUTPUT FORMAT (STRICT):
@@ -124,10 +112,10 @@ export async function generateJournalEntry(
 ): Promise<string> {
 	const prompt = buildPrompt(input);
 
-	const result = await ai.models.generateContent({
-		model: "gemini-2.0-flash-001",
-		contents: [{ role: "user", parts: [{ text: prompt }] }],
+	const response = await client.chat.completions.create({
+		model: "gpt-4.1-mini",
+		messages: [{ role: "user", content: prompt }],
 	});
 
-	return result.text ?? "No journal entry generated.";
+	return response.choices[0]?.message?.content ?? "No journal entry generated.";
 }
